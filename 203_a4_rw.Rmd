@@ -1,0 +1,25 @@
+---
+title: "203 a4"
+author: "Ruoyu Wang"
+date: "2019/11/6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+# Introduction
+
+# Data and Methods 
+
+# Results
+
+# Summary
+
+# References
