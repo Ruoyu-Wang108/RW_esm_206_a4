@@ -6,12 +6,22 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, include = FALSE)
+knitr::opts_chunk$set(echo = FALSE, include = TRUE, message = FALSE, warnings = FALSE)
 ```
 
 ```{r}
 library(tidyverse)
 library(janitor)
+library(wesanderson) ### color palette package
+
+# Change all the -99999 values into NA and clean all the column names in to snake_case.
+lob_rdata <- readr::read_csv("lobster_abundance_sbc_lter.csv",
+                             na = "-99999") %>%
+  clean_names()
+
+# Make the raw data into tidy format by uncounting the observations to separeted rows.
+lob_tidy <- lob_rdata %>% 
+  tidyr::uncount(count)
 ```
 
 # Introduction
@@ -19,6 +29,33 @@ library(janitor)
 # Data and Methods 
 
 # Results
+
+Results A: Visually explore changes in annual lobster abundance (counts) by site. After grouping observations to find lobster counts for each year, create a finalized data visualization (no modeling/stats needed) showing changes in annual lobster abundance at the five sites over time.
+```{r}
+# Count the lobster abundance by site and year.
+lob_year <- lob_tidy %>% 
+  count(year, site)
+
+# Show A
+ggplot(data = lob_year, aes(x = year, y = n)) +
+#  geom_col(aes(fill = site)) +
+  geom_line(aes(color = site), 
+            size = 1, 
+            show.legend = FALSE) +
+  geom_point(aes(color = site, shape = site), 
+             size = 2.5, 
+             show.legend = FALSE) +
+  scale_shape_manual(values = c(15, 16,17, 18, 25)) +
+  annotate("text", 
+           x = 2018.5:2018.5:2018.5:2018.5:2018.5, 
+           y = c(54, 343, 946, 164, 298), 
+           label = c("AQUE", "CARP", "IVEE", "MOHK", "NAPL"),
+           color = wes_palette("Darjeeling2", n = 5))+
+  scale_color_manual(values = wes_palette("Darjeeling2", n = 5)) +
+  theme_minimal()
+```
+
+
 
 # Summary
 
