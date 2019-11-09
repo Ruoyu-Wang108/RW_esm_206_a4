@@ -55,6 +55,19 @@ ggplot(data = lob_year, aes(x = year, y = n)) +
   theme_minimal()
 ```
 
+Results B. Visually explore lobster size distribution shifts by comparing lobster sizes in 2012 and 2018. Visually explore the size distributions for lobsters observed at the 5 different sites in 2012, and in 2018 (i.e. you will have a total of 10 size distributions shown: for each of the 5 sites, one for 2012 and one for 2018).
+
+```{r}
+lob_compare <- lob_tidy %>% 
+  filter(year %in% c(2012, 2018)) %>% 
+  select(year, site, size_mm)
+
+ggplot(data = lob_compare) +
+  geom_histogram(aes(x = size_mm, fill = site), show.legend = FALSE) +
+  facet_grid(year~site, scales = "free")+
+  scale_fill_manual(values = wes_palette("Darjeeling2", n = 5)) +
+  theme_minimal()
+```
 
 
 # Summary
