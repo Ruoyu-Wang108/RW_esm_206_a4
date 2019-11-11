@@ -25,7 +25,8 @@ lob_tidy <- lob_rdata %>%
 ```
 
 # Introduction
-
+Arroyo Quemado  Carpinteria  Isla Vista  Mohawk  Naples
+	 
 # Data and Methods 
 
 # Results
@@ -63,8 +64,8 @@ lob_compare <- lob_tidy %>%
   select(year, site, size_mm)
 
 # 10 histograms
-ggplot(data = lob_compare) +
-  geom_histogram(aes(x = size_mm, fill = site), show.legend = FALSE) +
+ggplot(data = lob_compare, aes(x = size_mm)) +
+  geom_histogram(aes(fill = site), show.legend = FALSE) +
   facet_grid(year~site, scales = "free")+
   scale_fill_manual(values = wes_palette("Darjeeling2", n = 5)) +
   theme_minimal()
@@ -75,8 +76,37 @@ ggplot(data = lob_compare) +
   facet_grid(year~site, scales = "free")+
   scale_color_manual(values = wes_palette("Darjeeling2", n = 5)) +
   theme_minimal()
+
+# change facets' names
 ```
 
+Results C. Compare mean lobster sizes at MPA vs. non-MPA sites in 2012 and 2018. Here, for each year (2012 and 2018) consolidate the size observations into only two groups: MPA and non-MPA lobsters.
+
+MPAs: NAPL, IVEE
+Non-MPAs: AQUE, CARP, MOHK
+Naples and Isla Vista, both established as MPAs on 2012-01-01.
+
+```{r}
+lob_mpa <- lob_compare %>% 
+    mutate(category = ifelse(site %in% c("NAPL", "IVEE"), "mpa", "non_mpa"))
+
+lob_mpa_ave <- lob_mpa %>% 
+  group_by(category) %>% 
+  summarize(
+    size_mean = mean(size_mm, na.rm = TRUE)
+  )
+
+ggplot(data = lob_mpa, aes(x = size_mm, color = category, fill = category)) +
+  geom_density(alpha = .3,show.legend = FALSE)+
+  geom_vline(data = lob_mpa_ave, aes(xintercept = size_mean,
+                                 colour = category),
+             linetype = "dashed",
+             size = 1
+             ,show.legend = FALSE) +
+  scale_y_discrete(expand = c(0,0)) +
+  annotate("text", x = c(85, 62), y = .034:.034, label = c("MPA", "Non-MPA")) +
+  theme_minimal()
+```
 
 # Summary
 
