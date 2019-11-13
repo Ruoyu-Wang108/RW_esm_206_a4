@@ -87,18 +87,26 @@ Non-MPAs: AQUE, CARP, MOHK
 Naples and Isla Vista, both established as MPAs on 2012-01-01.
 
 ```{r}
+# Get the right category to different sites
 lob_mpa <- lob_compare %>% 
     mutate(category = ifelse(site %in% c("NAPL", "IVEE"), "mpa", "non_mpa"))
 
-lob_mpa_ave <- lob_mpa %>% 
+# calculate the suammary table for the MPA group and non-MPA group
+lob_mpa_summary <- lob_mpa %>% 
   group_by(category) %>% 
   summarize(
-    size_mean = mean(size_mm, na.rm = TRUE)
+    site_mean = mean(size_mm, na.rm = TRUE),
+    site_median = median(size_mm, na.rm = TRUE),
+    site_sd = sd(size_mm, na.rm = TRUE),
+    site_n = n()
   )
+```
 
+watch the data
+```{r}
 ggplot(data = lob_mpa, aes(x = size_mm, color = category, fill = category)) +
   geom_density(alpha = .3,show.legend = FALSE)+
-  geom_vline(data = lob_mpa_ave, aes(xintercept = size_mean,
+  geom_vline(data = lob_mpa_summary, aes(xintercept = site_mean,
                                  colour = category),
              linetype = "dashed",
              size = 1
@@ -107,6 +115,15 @@ ggplot(data = lob_mpa, aes(x = size_mm, color = category, fill = category)) +
   annotate("text", x = c(85, 62), y = .034:.034, label = c("MPA", "Non-MPA")) +
   theme_minimal()
 ```
+
+two sample, two sided unpaired indenpendent t-test
+null hypothesis: non-MPA and MPA have the same size mean
+alternative hypothesis: the size mean in two groups are not the same
+
+```{r}
+
+```
+
 
 # Summary
 
