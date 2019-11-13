@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = FALSE, include = TRUE, message = FALSE, warnings = 
 library(tidyverse)
 library(janitor)
 library(wesanderson) ### color palette package
+library(effsize)
 
 # Change all the -99999 values into NA and clean all the column names in to snake_case.
 lob_rdata <- readr::read_csv("lobster_abundance_sbc_lter.csv",
@@ -89,11 +90,11 @@ Naples and Isla Vista, both established as MPAs on 2012-01-01.
 ```{r}
 # Get the right category to different sites
 lob_mpa <- lob_compare %>% 
-    mutate(category = ifelse(site %in% c("NAPL", "IVEE"), "mpa", "non_mpa"))
+  mutate(category = ifelse(site %in% c("NAPL", "IVEE"), "mpa", "non_mpa"))
 
 # calculate the suammary table for the MPA group and non-MPA group
-lob_mpa_summary <- lob_mpa %>% 
-  group_by(category) %>% 
+lob_mpa_summary <- lob_mpa %>%
+  group_by(category) %>%
   summarize(
     site_mean = mean(size_mm, na.rm = TRUE),
     site_median = median(size_mm, na.rm = TRUE),
@@ -121,9 +122,24 @@ null hypothesis: non-MPA and MPA have the same size mean
 alternative hypothesis: the size mean in two groups are not the same
 
 ```{r}
+mpa_ttest <- t.test(data = lob_mpa, size_mm~category)
+mpa_ttest
+```
+Cohen's *d* effecet size is calculated by: 
 
+$$d = \frac{Mean_{MPA} - Mean_{non-MPA}}{SD_{pooled}}$$
+
+where the pooled standard deviation for both groups, SD~pooled~ is calculated by: 
+
+$$SD_{pooled}=\sqrt{\frac{SD_{MPA}^2 + SD_{non-MPA}^2}{2}}$$
+```{r}
+mpa_d <- effsize::cohen.d(data = lob_mpa, size_mm~category, na.rm = TRUE)
 ```
 
+
+**Example statement of test outcome:** 
+
+"Mean size of lobster (mm) measured in MPA sites' samples (`r round(lob_mpa_summary$site_mean[1], 2)` $\pm$ `r round(lob_mpa_summary$site_sd[1], 2)`, n = `r lob_mpa_summary$site_n[1]`) differed significantly from lobster size in non MPA sites (`r round(lob_mpa_summary$site_mean[2], 2)` $\pm$ `r round(lob_mpa_summary$site_sd[2], 2)`, n = `r lob_mpa_summary$site_n[2]`) by a unpaired two-sample t-test (t(`r round(mpa_ttest$parameter, 2)`) = `r round(mpa_ttest$statistic, 2)`, *p* < 0.001)."
 
 # Summary
 
