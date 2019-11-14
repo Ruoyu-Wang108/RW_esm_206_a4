@@ -60,19 +60,19 @@ ggplot(data = lob_year, aes(x = year, y = n)) +
 Results B. Visually explore lobster size distribution shifts by comparing lobster sizes in 2012 and 2018. Visually explore the size distributions for lobsters observed at the 5 different sites in 2012, and in 2018 (i.e. you will have a total of 10 size distributions shown: for each of the 5 sites, one for 2012 and one for 2018).
 
 ```{r}
-lob_compare <- lob_tidy %>% 
+lob_compare_site <- lob_tidy %>% 
   filter(year %in% c(2012, 2018)) %>% 
   select(year, site, size_mm)
 
 # 10 histograms
-ggplot(data = lob_compare, aes(x = size_mm)) +
+ggplot(data = lob_compare_site, aes(x = size_mm)) +
   geom_histogram(aes(fill = site), show.legend = FALSE) +
   facet_grid(year~site, scales = "free")+
   scale_fill_manual(values = wes_palette("Darjeeling2", n = 5)) +
   theme_minimal()
 
 # 10 qqplots
-ggplot(data = lob_compare) +
+ggplot(data = lob_compare_site) +
   geom_qq(aes(sample = size_mm, color = site), show.legend = FALSE) +
   facet_grid(year~site, scales = "free")+
   scale_color_manual(values = wes_palette("Darjeeling2", n = 5)) +
@@ -81,7 +81,7 @@ ggplot(data = lob_compare) +
 # change facets' names
 ```
 
-Results C. Compare mean lobster sizes at MPA vs. non-MPA sites in 2012 and 2018. Here, for each year (2012 and 2018) consolidate the size observations into only two groups: MPA and non-MPA lobsters.
+#### Results C. Compare mean lobster sizes at MPA vs. non-MPA sites in 2012 and 2018. Here, for each year (2012 and 2018) consolidate the size observations into only two groups: MPA and non-MPA lobsters.
 
 MPAs: NAPL, IVEE
 Non-MPAs: AQUE, CARP, MOHK
@@ -89,12 +89,12 @@ Naples and Isla Vista, both established as MPAs on 2012-01-01.
 
 ```{r}
 # Get the right category to different sites
-lob_mpa <- lob_compare %>% 
+lob_mpa <- lob_compare_site %>% 
   mutate(category = ifelse(site %in% c("NAPL", "IVEE"), "mpa", "non_mpa"))
 
 # calculate the suammary table for the MPA group and non-MPA group
 lob_mpa_summary <- lob_mpa %>%
-  group_by(category) %>%
+  group_by(category, year) %>%
   summarize(
     site_mean = mean(size_mm, na.rm = TRUE),
     site_median = median(size_mm, na.rm = TRUE),
@@ -107,13 +107,27 @@ watch the data
 ```{r}
 ggplot(data = lob_mpa, aes(x = size_mm, color = category, fill = category)) +
   geom_density(alpha = .3,show.legend = FALSE)+
+  facet_wrap(~year)+
   geom_vline(data = lob_mpa_summary, aes(xintercept = site_mean,
                                  colour = category),
              linetype = "dashed",
-             size = 1
-             ,show.legend = FALSE) +
+             size = 1,
+             show.legend = FALSE) +
   scale_y_discrete(expand = c(0,0)) +
-  annotate("text", x = c(85, 62), y = .034:.034, label = c("MPA", "Non-MPA")) +
+ # annotate("text", x = c(85, 62), y = .034:.034, label = c("MPA", "Non-MPA")) +
+  theme_minimal()
+
+ggplot(data = lob_mpa, aes(x = size_mm, fill = year, color = year)) +
+  geom_histogram(alpha = .5,show.legend = FALSE)+
+  facet_wrap(~category)+
+  geom_vline(data = lob_mpa_summary, aes(xintercept = site_mean,
+                                 colour = year),
+             linetype = "dashed",
+             size = 1,
+             show.legend = FALSE) +
+  scale_y_discrete(expand = c(0,0)) +
+  scale_fill_manual(values = wes_palette("Darjeeling2", n = 2)) +
+ # annotate("text", x = c(85, 62), y = .034:.034, label = c("MPA", "Non-MPA")) +
   theme_minimal()
 ```
 
@@ -123,7 +137,7 @@ alternative hypothesis: the size mean in two groups are not the same
 
 ```{r}
 mpa_ttest <- t.test(data = lob_mpa, size_mm~category)
-mpa_ttest
+
 ```
 Cohen's *d* effecet size is calculated by: 
 
