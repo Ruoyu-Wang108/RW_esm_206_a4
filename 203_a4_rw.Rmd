@@ -5,7 +5,7 @@ date: "2019/11/6"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message = FALSE, warnings = FALSE}
 knitr::opts_chunk$set(echo = FALSE, include = TRUE, message = FALSE, warnings = FALSE)
 ```
 
@@ -32,7 +32,7 @@ Arroyo Quemado  Carpinteria  Isla Vista  Mohawk  Naples
 
 # Results
 
-Results A: Visually explore changes in annual lobster abundance (counts) by site. After grouping observations to find lobster counts for each year, create a finalized data visualization (no modeling/stats needed) showing changes in annual lobster abundance at the five sites over time.
+#### Results A: Visually explore changes in annual lobster abundance (counts) by site. After grouping observations to find lobster counts for each year, create a finalized data visualization (no modeling/stats needed) showing changes in annual lobster abundance at the five sites over time.
 ```{r}
 # Count the lobster abundance by site and year.
 lob_year <- lob_tidy %>% 
@@ -57,7 +57,7 @@ ggplot(data = lob_year, aes(x = year, y = n)) +
   theme_minimal()
 ```
 
-Results B. Visually explore lobster size distribution shifts by comparing lobster sizes in 2012 and 2018. Visually explore the size distributions for lobsters observed at the 5 different sites in 2012, and in 2018 (i.e. you will have a total of 10 size distributions shown: for each of the 5 sites, one for 2012 and one for 2018).
+##### Results B. Visually explore lobster size distribution shifts by comparing lobster sizes in 2012 and 2018. Visually explore the size distributions for lobsters observed at the 5 different sites in 2012, and in 2018 (i.e. you will have a total of 10 size distributions shown: for each of the 5 sites, one for 2012 and one for 2018).
 
 ```{r}
 lob_compare_site <- lob_tidy %>% 
@@ -89,26 +89,26 @@ Naples and Isla Vista, both established as MPAs on 2012-01-01.
 
 ```{r}
 # Get the right category to different sites
-lob_mpa <- lob_compare_site %>% 
+lob_tdata <- lob_compare_site %>% 
   mutate(category = ifelse(site %in% c("NAPL", "IVEE"), "mpa", "non_mpa"))
 
 # calculate the suammary table for the MPA group and non-MPA group
-lob_mpa_summary <- lob_mpa %>%
+lob_tsummary <- lob_tdata %>%
   group_by(category, year) %>%
   summarize(
-    site_mean = mean(size_mm, na.rm = TRUE),
-    site_median = median(size_mm, na.rm = TRUE),
-    site_sd = sd(size_mm, na.rm = TRUE),
-    site_n = n()
+    mean = mean(size_mm, na.rm = TRUE),
+    median = median(size_mm, na.rm = TRUE),
+    sd = sd(size_mm, na.rm = TRUE),
+    n = n()
   )
 ```
 
 watch the data
 ```{r}
-ggplot(data = lob_mpa, aes(x = size_mm, color = category, fill = category)) +
+ggplot(data = lob_tdata, aes(x = size_mm, color = category, fill = category)) +
   geom_density(alpha = .3,show.legend = FALSE)+
   facet_wrap(~year)+
-  geom_vline(data = lob_mpa_summary, aes(xintercept = site_mean,
+  geom_vline(data = lob_tsummary, aes(xintercept = mean,
                                  colour = category),
              linetype = "dashed",
              size = 1,
@@ -117,10 +117,10 @@ ggplot(data = lob_mpa, aes(x = size_mm, color = category, fill = category)) +
  # annotate("text", x = c(85, 62), y = .034:.034, label = c("MPA", "Non-MPA")) +
   theme_minimal()
 
-ggplot(data = lob_mpa, aes(x = size_mm, fill = year, color = year)) +
-  geom_histogram(alpha = .5,show.legend = FALSE)+
+ggplot(data = lob_tdata, aes(x = size_mm, fill = year, color = year)) +
+  geom_density(alpha = .5,show.legend = FALSE)+
   facet_wrap(~category)+
-  geom_vline(data = lob_mpa_summary, aes(xintercept = site_mean,
+  geom_vline(data = lob_tsummary, aes(xintercept = mean,
                                  colour = year),
              linetype = "dashed",
              size = 1,
@@ -131,13 +131,68 @@ ggplot(data = lob_mpa, aes(x = size_mm, fill = year, color = year)) +
   theme_minimal()
 ```
 
+1. in 2012, size mean are the same in MPA and non-MPA sites
+two sample, two sided unpaired indenpendent t-test
+null hypothesis: non-MPA and MPA have the same size mean
+alternative hypothesis: the size mean in two groups are not the same
+```{r}
+lob_2012 <- lob_tdata %>% 
+  filter(year == 2012)
+
+# ggplot(data = lob_mpa, aes(x = size_mm, fill = category, color = category)) +
+#   geom_histogram(alpha = .5,show.legend = FALSE)+
+#   geom_vline(data = lob_mpa_summary, aes(xintercept = site_mean,
+#                                  colour = year),
+#              linetype = "dashed",
+#              size = 1,
+#              show.legend = FALSE) +
+#   scale_y_discrete(expand = c(0,0)) +
+#   scale_fill_manual(values = wes_palette("Darjeeling2", n = 2)) +
+#  # annotate("text", x = c(85, 62), y = .034:.034, label = c("MPA", "Non-MPA")) +
+#   theme_minimal()
+
+y2012_ttest <- t.test(data = lob_2012, size_mm~category)
+y2012_d <- effsize::cohen.d(data = lob_2012, size_mm~category, na.rm = TRUE)
+```
+
+2. in 2018, size mean are the same in MPA and non-MPA sites
 two sample, two sided unpaired indenpendent t-test
 null hypothesis: non-MPA and MPA have the same size mean
 alternative hypothesis: the size mean in two groups are not the same
 
 ```{r}
-mpa_ttest <- t.test(data = lob_mpa, size_mm~category)
+lob_2018 <- lob_tdata %>% 
+  filter(year == 2018)
 
+y2018_ttest <- t.test(data = lob_2018, size_mm~category)
+y2018_d <- effsize::cohen.d(size_mm~category,data = lob_2018,na.rm = TRUE)
+```
+
+3. For MPA, mean size are the same in year 2012 and 2018
+two sample, two sided unpaired indenpendent t-test
+null hypothesis: 2012 and 2018 have the same size mean
+alternative hypothesis: the size mean in two groups are not the same
+
+```{r, message = FALSE, warnings = FALSE}
+lob_mpa <- lob_tdata %>% 
+  filter(category == "mpa")
+
+mpa_ttest <- t.test(data = lob_mpa, size_mm~year)
+mpa_d <- effsize::cohen.d(size_mm~year, data = lob_mpa, na.rm = TRUE)
+
+```
+
+4. For non-MPA, mean size are the same in year 2012 and 2018
+two sample, two sided unpaired indenpendent t-test
+null hypothesis: 2012 and 2018 have the same size mean
+alternative hypothesis: the size mean in two groups are not the same
+
+```{r, message = FALSE, warnings = FALSE}
+lob_nonmpa <- lob_tdata %>% 
+  filter(category == "non_mpa")
+
+nonmpa_ttest <- t.test(data = lob_nonmpa, size_mm~year)
+nonmpa_d <- effsize::cohen.d(data = lob_nonmpa, size_mm~year, na.rm = TRUE)
 ```
 Cohen's *d* effecet size is calculated by: 
 
@@ -146,14 +201,12 @@ $$d = \frac{Mean_{MPA} - Mean_{non-MPA}}{SD_{pooled}}$$
 where the pooled standard deviation for both groups, SD~pooled~ is calculated by: 
 
 $$SD_{pooled}=\sqrt{\frac{SD_{MPA}^2 + SD_{non-MPA}^2}{2}}$$
-```{r}
-mpa_d <- effsize::cohen.d(data = lob_mpa, size_mm~category, na.rm = TRUE)
-```
+
 
 
 **Example statement of test outcome:** 
 
-"Mean size of lobster (mm) measured in MPA sites' samples (`r round(lob_mpa_summary$site_mean[1], 2)` $\pm$ `r round(lob_mpa_summary$site_sd[1], 2)`, n = `r lob_mpa_summary$site_n[1]`) differed significantly from lobster size in non MPA sites (`r round(lob_mpa_summary$site_mean[2], 2)` $\pm$ `r round(lob_mpa_summary$site_sd[2], 2)`, n = `r lob_mpa_summary$site_n[2]`) by a unpaired two-sample t-test (t(`r round(mpa_ttest$parameter, 2)`) = `r round(mpa_ttest$statistic, 2)`, *p* < 0.001)."
+"Mean size of lobster (mm) measured in MPA sites' samples (`r round(lob_tsummary$mean[1], 2)` $\pm$ `r round(lob_tsummary$sd[1], 2)`, n = `r lob_tsummary$n[1]`) differed significantly from lobster size in non MPA sites (`r round(lob_tsummary$mean[2], 2)` $\pm$ `r round(lob_tsummary$sd[2], 2)`, n = `r lob_tsummary$n[2]`) by a unpaired two-sample t-test (t(`r round(mpa_ttest$parameter, 2)`) = `r round(mpa_ttest$statistic, 2)`, *p* < 0.001)."
 
 # Summary
 
